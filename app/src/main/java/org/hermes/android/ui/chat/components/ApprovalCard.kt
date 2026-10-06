@@ -2,14 +2,24 @@ package org.hermes.android.ui.chat.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.hermes.android.data.model.ApprovalChoice
 import org.hermes.android.data.model.ApprovalMessage
+import org.hermes.android.ui.theme.AssistantUiTokens
 
+/**
+ * Port of assistant-ui/elements/approval-card
+ * Human in the loop action approval before the agent takes consequential actions.
+ */
 @Composable
 fun ApprovalCard(
     message: ApprovalMessage,
@@ -17,59 +27,85 @@ fun ApprovalCard(
 ) {
     var showConfirmAlways by remember { mutableStateOf(false) }
 
-    ElevatedCard(
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-        ),
+    Surface(
+        shape = AssistantUiTokens.PaperShape,
+        color = AssistantUiTokens.paperColor(),
+        border = AssistantUiTokens.paperBorder(),
+        tonalElevation = 3.dp,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
-            Text(
-                text = "Command Approval Required",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.error
-            )
-            Spacer(modifier = Modifier.height(4.dp))
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(20.dp)
+                )
+                Text(
+                    text = "Action Approval Required",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 15.sp
+                    ),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
             Text(
                 text = message.description,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface
+                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
+
             Surface(
-                shape = RoundedCornerShape(8.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant,
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                border = AssistantUiTokens.fieldBorder(),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
                     text = message.command,
                     fontFamily = FontFamily.Monospace,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(10.dp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                    modifier = Modifier.padding(12.dp),
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             if (message.resolved) {
-                Text(
-                    text = "Decision: ${message.choice?.value?.replaceFirstChar { it.uppercase() } ?: "Resolved"}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
+                Surface(
+                    shape = AssistantUiTokens.PillShape,
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    modifier = Modifier.padding(top = 2.dp)
+                ) {
+                    Text(
+                        text = "Decision: ${message.choice?.value?.replaceFirstChar { it.uppercase() } ?: "Resolved"}",
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    )
+                }
             } else if (showConfirmAlways) {
                 Text(
-                    text = "Are you sure you want to ALWAYS allow this command without asking?",
+                    text = "Always allow this command in this session without prompt?",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     TextButton(onClick = { showConfirmAlways = false }) {
                         Text("Cancel")
@@ -90,11 +126,15 @@ fun ApprovalCard(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    FilledTonalButton(
+                    Button(
                         onClick = { onChoiceSelected(ApprovalChoice.ONCE) },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = AssistantUiTokens.inkContainerColor(),
+                            contentColor = AssistantUiTokens.inkContentColor()
+                        ),
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Allow Once")
+                        Text("Approve")
                     }
                     OutlinedButton(
                         onClick = { showConfirmAlways = true },
@@ -102,12 +142,15 @@ fun ApprovalCard(
                     ) {
                         Text("Always")
                     }
-                    Button(
+                    FilledTonalButton(
                         onClick = { onChoiceSelected(ApprovalChoice.REJECT) },
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer
+                        ),
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Deny")
+                        Text("Reject")
                     }
                 }
             }
