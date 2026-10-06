@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">Hermes Agent</string>
+    <string name="chat_title">Hermes Chat</string>
+    <string name="composer_hint">Ask Hermes or type /...</string>
+    <string name="zerops_connected">Zerops prg1 · Connected</string>
+    <string name="connecting">Connecting...</string>
+    <string name="thinking">Thinking...</string>
+    <string name="allow_once">Allow Once</string>
+    <string name="always_allow">Always Allow</string>
+    <string name="deny">Deny</string>
+    <string name="confirm_always">Are you sure you want to always allow this command?</string>
+    <string name="cancel">Cancel</string>
+    <string name="confirm">Confirm</string>
+    <string name="send">Send</string>
+    <string name="skip">Let Hermes Decide</string>
+</resources>
