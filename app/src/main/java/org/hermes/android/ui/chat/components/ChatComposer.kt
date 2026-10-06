@@ -68,6 +68,7 @@ fun ChatComposer(
     onInterrupt: () -> Unit,
     activeModel: String = "Hermes 3",
     usageState: UsageState = UsageState(),
+    onOpenModelPicker: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     var stagedFiles by remember { mutableStateOf(listOf<StagedAttachment>()) }
@@ -290,12 +291,14 @@ fun ChatComposer(
                             }
                         }
 
-                        // Model Badge Pill
+                        // Model Badge Pill (assistant-ui composer-model-picker)
                         Surface(
                             shape = AssistantUiTokens.PillShape,
                             color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.5f),
                             border = AssistantUiTokens.fieldBorder(),
-                            modifier = Modifier.clip(AssistantUiTokens.PillShape)
+                            modifier = Modifier
+                                .clip(AssistantUiTokens.PillShape)
+                                .then(if (onOpenModelPicker != null) Modifier.clickable { onOpenModelPicker() } else Modifier)
                         ) {
                             Row(
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),

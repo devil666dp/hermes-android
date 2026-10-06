@@ -4,16 +4,21 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 import org.hermes.android.data.network.ConnectionStatus
 import org.hermes.android.ui.chat.components.*
 import org.hermes.android.ui.theme.AssistantUiTokens
@@ -22,6 +27,37 @@ import org.hermes.android.ui.theme.AssistantUiTokens
 @Composable
 fun ChatScreen(viewModel: ChatViewModel) {
     val state by viewModel.uiState.collectAsState()
+
+    var showModelDialog by remember { mutableStateOf(false) }
+    var showMenu by remember { mutableStateOf(false) }
+
+    // Live elapsed timer while generating
+    var elapsedSeconds by remember { mutableIntStateOf(0) }
+    LaunchedEffect(state.isGenerating) {
+        if (state.isGenerating) {
+            elapsedSeconds = 0
+            while (true) {
+                delay(1000)
+                elapsedSeconds++
+            }
+        } else {
+            elapsedSeconds = 0
+        }
+    }
+
+    val formattedElapsed = remember(elapsedSeconds) {
+        val mins = elapsedSeconds / 60
+        val secs = elapsedSeconds % 60
+        String.format("%d:%02d", mins, secs)
+    }
+
+    if (showModelDialog) {
+        ModelSelectorDialog(
+            selectedModel = state.activeModel,
+            onModelSelected = { viewModel.selectModel(it) },
+            onDismiss = { showModelDialog = false }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -76,12 +112,41 @@ fun ChatScreen(viewModel: ChatViewModel) {
                     AgentStatusPill(
                         state = agentState,
                         label = statusLabel,
-                        elapsed = if (state.isGenerating) "live" else null,
+                        elapsed = if (state.isGenerating) formattedElapsed else null,
+                        onClick = { showModelDialog = true },
                         modifier = Modifier.padding(end = 4.dp)
                     )
 
-                    IconButton(onClick = { viewModel.connectWithCredentials("sunil", "rashmoni$034") }) {
-                        Icon(imageVector = Icons.Default.Refresh, contentDescription = "Reconnect")
+                    Box {
+                        IconButton(onClick = { showMenu = true }) {
+                            Icon(imageVector = Icons.Default.MoreVert, contentDescription = "Menu")
+                        }
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Switch Model (${state.activeModel})") },
+                                onClick = {
+                                    showMenu = false
+                                    showModelDialog = true
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Reconnect Gateway") },
+                                onClick = {
+                                    showMenu = false
+                                    viewModel.connectWithCredentials("sunil", "rashmoni$034")
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Clear Chat") },
+                                onClick = {
+                                    showMenu = false
+                                    viewModel.clearMessages()
+                                }
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -97,7 +162,8 @@ fun ChatScreen(viewModel: ChatViewModel) {
                 onSend = viewModel::submitPrompt,
                 onInterrupt = viewModel::interrupt,
                 activeModel = state.activeModel,
-                usageState = state.usageState
+                usageState = state.usageState,
+                onOpenModelPicker = { showModelDialog = true }
             )
         }
     ) { paddingValues ->

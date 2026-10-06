@@ -10,10 +10,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -26,13 +26,25 @@ import org.hermes.android.ui.theme.AssistantUiTokens
 
 /**
  * Port of assistant-ui/elements/message-pair and streaming-text
- * Clean typography, role-aware containers, and message action buttons.
+ * Clean typography, role-aware containers, markdown styling, and message actions.
  */
 @Composable
-fun ChatBubble(message: ChatBubbleMessage) {
+fun ChatBubble(
+    message: ChatBubbleMessage,
+    onRegenerate: (() -> Unit)? = null
+) {
     val context = LocalContext.current
     val isUser = message.role == "user"
     val alignment = if (isUser) Alignment.End else Alignment.Start
+
+    var isCopied by remember { mutableStateOf(false) }
+
+    LaunchedEffect(isCopied) {
+        if (isCopied) {
+            kotlinx.coroutines.delay(2000)
+            isCopied = false
+        }
+    }
 
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val cursorAlpha by infiniteTransition.animateFloat(
@@ -46,15 +58,17 @@ fun ChatBubble(message: ChatBubbleMessage) {
     )
 
     Column(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
         horizontalAlignment = alignment
     ) {
         if (!isUser) {
-            // Assistant avatar label
+            // Assistant avatar & identity header
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
-                modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
+                modifier = Modifier.padding(start = 2.dp, bottom = 4.dp)
             ) {
                 Surface(
                     shape = CircleShape,
@@ -83,7 +97,7 @@ fun ChatBubble(message: ChatBubbleMessage) {
 
         Surface(
             shape = if (isUser) {
-                RoundedCornerShape(20.dp, 20.dp, 6.dp, 20.dp)
+                RoundedCornerShape(20.dp, 20.dp, 4.dp, 20.dp)
             } else {
                 AssistantUiTokens.PaperShape
             },
@@ -94,23 +108,30 @@ fun ChatBubble(message: ChatBubbleMessage) {
             },
             border = if (isUser) null else AssistantUiTokens.paperBorder(),
             tonalElevation = if (isUser) 2.dp else 1.dp,
-            modifier = Modifier.widthIn(max = 350.dp)
+            modifier = Modifier.widthIn(max = if (isUser) 330.dp else 360.dp)
         ) {
             Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
                 if (message.content.isNotEmpty()) {
-                    Text(
-                        text = message.content,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            lineHeight = 22.sp,
-                            fontSize = 14.sp
-                        ),
-                        color = if (isUser) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
-                    )
+                    if (isUser) {
+                        Text(
+                            text = message.content,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                lineHeight = 21.sp,
+                                fontSize = 14.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    } else {
+                        AssistantMarkdownText(
+                            text = message.content,
+                            textColor = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                 }
 
                 // Streaming cursor indicator
                 if (message.pending) {
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                     Box(
                         modifier = Modifier
                             .size(width = 8.dp, height = 14.dp)
@@ -128,25 +149,27 @@ fun ChatBubble(message: ChatBubbleMessage) {
                     )
                 }
 
-                // Assistant actions row (copy, etc.)
+                // Assistant actions toolbar (Copy, etc.)
                 if (!isUser && message.content.isNotEmpty() && !message.pending) {
                     Spacer(modifier = Modifier.height(6.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         IconButton(
                             onClick = {
                                 val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                 val clip = ClipData.newPlainText("Hermes Message", message.content)
                                 clipboard.setPrimaryClip(clip)
+                                isCopied = true
                             },
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(26.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Default.ContentCopy,
+                                imageVector = if (isCopied) Icons.Default.Check else Icons.Default.ContentCopy,
                                 contentDescription = "Copy message",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                tint = if (isCopied) Color(0xFF4CAF50) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                                 modifier = Modifier.size(13.dp)
                             )
                         }

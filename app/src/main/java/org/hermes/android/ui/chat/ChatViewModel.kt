@@ -117,6 +117,14 @@ class ChatViewModel(
         }
     }
 
+    fun selectModel(modelName: String) {
+        _uiState.update { it.copy(activeModel = modelName) }
+    }
+
+    fun clearMessages() {
+        _uiState.update { it.copy(messages = emptyList()) }
+    }
+
     fun interrupt() {
         viewModelScope.launch {
             repository.interrupt()
