@@ -109,4 +109,9 @@ data class UsageState(
     val contextWindowTokens: Long? = null,
     val cacheReadTokens: Long? = null,
     val cacheWriteTokens: Long? = null
-)
+) {
+    val tokensUsed: Long get() = totalTokens
+    val contextPercent: Int get() = if (contextTokens != null && contextWindowTokens != null && contextWindowTokens > 0) {
+        ((contextTokens.toDouble() / contextWindowTokens) * 100).toInt()
+    } else 0
+}

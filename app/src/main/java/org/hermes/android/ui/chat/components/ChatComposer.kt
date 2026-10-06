@@ -326,14 +326,15 @@ fun ChatComposer(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         // Context Usage indicator
-                        if (usageState.tokensUsed > 0) {
+                        if (usageState.totalTokens > 0) {
+                            val pct = usageState.contextPercent
                             Surface(
                                 shape = AssistantUiTokens.PillShape,
                                 color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.4f),
                                 modifier = Modifier.clip(AssistantUiTokens.PillShape)
                             ) {
                                 Text(
-                                    text = "${usageState.contextPercent}% ctx",
+                                    text = "$pct% ctx",
                                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
