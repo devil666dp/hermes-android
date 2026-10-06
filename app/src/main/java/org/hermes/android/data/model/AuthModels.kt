@@ -1,18 +1,21 @@
 package org.hermes.android.data.model
 
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class LoginRequest(
-    val provider: String = "basic",
+    @EncodeDefault val provider: String = "basic",
     val username: String,
     val password: String,
-    val next: String = ""
+    @EncodeDefault val next: String = ""
 )
 
 @Serializable
 data class LoginResponse(
-    val ok: Boolean,
+    val ok: Boolean = false,
     val next: String? = null,
     val error: String? = null
 )

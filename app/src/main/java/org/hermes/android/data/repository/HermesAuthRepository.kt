@@ -16,7 +16,11 @@ import java.io.IOException
 
 class HermesAuthRepository(context: Context) {
 
-    private val json = Json { ignoreUnknownKeys = true }
+    private val json = Json {
+        encodeDefaults = true
+        ignoreUnknownKeys = true
+        isLenient = true
+    }
     private val prefs: SharedPreferences = context.getSharedPreferences("hermes_auth_prefs", Context.MODE_PRIVATE)
 
     val dashboardUrl = "https://hermes-3238-9119.prg1.zerops.app"
@@ -63,7 +67,7 @@ class HermesAuthRepository(context: Context) {
         try {
             val reqBody = json.encodeToString(
                 LoginRequest.serializer(),
-                LoginRequest(username = username, password = password)
+                LoginRequest(provider = "basic", username = username, password = password, next = "")
             )
             val request = Request.Builder()
                 .url("$dashboardUrl/auth/password-login")

@@ -25,7 +25,11 @@ enum class ConnectionStatus {
 class HermesWebSocketClient(
     private val authRepo: HermesAuthRepository
 ) {
-    private val json = Json { ignoreUnknownKeys = true }
+    private val json = Json {
+        encodeDefaults = true
+        ignoreUnknownKeys = true
+        isLenient = true
+    }
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val nextId = AtomicInteger(1)
 
