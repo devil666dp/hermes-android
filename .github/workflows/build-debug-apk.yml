@@ -36,13 +36,19 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
+      - name: Ensure Gradle Wrapper JAR
+        run: |
+          mkdir -p gradle/wrapper
+          if [ ! -f gradle/wrapper/gradle-wrapper.jar ] || [ ! -s gradle/wrapper/gradle-wrapper.jar ]; then
+            echo "Downloading gradle-wrapper.jar..."
+            curl -sL https://raw.githubusercontent.com/gradle/gradle/v8.7.0/gradle/wrapper/gradle-wrapper.jar -o gradle/wrapper/gradle-wrapper.jar
+          fi
+          chmod +x ./gradlew
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: '8.7'
-
-      - name: Grant Execute Permission to gradlew
-        run: chmod +x ./gradlew
 
       - name: Build Debug APK with Gradle
         run: ./gradlew assembleDebug --stacktrace
